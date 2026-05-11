@@ -13,17 +13,25 @@ export default async function Command() {
     title: "Checking usage",
   });
 
-  const [amp, codex] = await Promise.all([checkUsage(getAmpFreeRemaining), checkUsage(getCodexUsage)]);
+  const [amp, codex] = await Promise.all([checkUsage("Amp", getAmpFreeRemaining), checkUsage("Codex", getCodexUsage)]);
 
   toast.style = amp.value || codex.value ? Toast.Style.Success : Toast.Style.Failure;
   toast.title = "Usage";
   toast.message = `Amp: ${formatUsageResult(amp)} · Codex: ${formatUsageResult(codex)}`;
 }
 
-async function checkUsage(loadUsage: () => Promise<string>): Promise<UsageResult> {
+async function checkUsage(provider: string, loadUsage: () => Promise<string>): Promise<UsageResult> {
+  const startedAt = Date.now();
+
   try {
-    return { value: await loadUsage(), error: null };
+    const value = await loadUsage();
+
+    console.log(`${provider} usage fetch completed in ${Date.now() - startedAt}ms`);
+
+    return { value, error: null };
   } catch (error) {
+    console.log(`${provider} usage fetch failed in ${Date.now() - startedAt}ms`);
+
     return { value: null, error: error instanceof Error ? error.message : "Error" };
   }
 }
