@@ -17,6 +17,7 @@
     {
       "name": "check-usage",
       "title": "Check Usage",
+      "subtitle": "See usage for Amp and Codex",
       "description": "The command shows a toast of how much usage is left.",
       "mode": "no-view"
     }
