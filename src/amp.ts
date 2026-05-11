@@ -7,6 +7,8 @@ const execFileAsync = promisify(execFile);
 const cliPath = [
   process.env.PATH,
   join(homedir(), ".local", "bin"),
+  process.env.APPDATA ? join(process.env.APPDATA, "npm") : null,
+  process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, "Programs") : null,
   "/opt/homebrew/bin",
   "/usr/local/bin",
   "/usr/bin",
@@ -19,7 +21,10 @@ export async function getAmpFreeRemaining() {
   let stdout: string;
 
   try {
-    ({ stdout } = await execFileAsync("amp", ["usage"], { env: { ...process.env, PATH: cliPath } }));
+    ({ stdout } = await execFileAsync("amp", ["usage"], {
+      env: { ...process.env, PATH: cliPath },
+      shell: process.platform === "win32",
+    }));
   } catch {
     throw new Error("Unavailable");
   }
