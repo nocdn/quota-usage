@@ -11,7 +11,17 @@ const CODEX_HEADERS = {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 };
 
+export interface CodexUsage {
+  display: string;
+  fiveHourResetAt: number;
+  weeklyResetAt: number;
+}
+
 export async function getCodexUsage() {
+  return (await getCodexUsageDetails()).display;
+}
+
+export async function getCodexUsageDetails(): Promise<CodexUsage> {
   const token = readCodexAccessToken();
 
   if (!token) {
@@ -82,18 +92,31 @@ function formatCodexUsage(data: unknown) {
 
   const response = data as {
     rate_limit?: {
-      primary_window?: { used_percent?: number };
-      secondary_window?: { used_percent?: number };
+      primary_window?: { used_percent?: number; reset_at?: number };
+      secondary_window?: { used_percent?: number; reset_at?: number };
     };
   };
-  const primaryUsedPercent = response.rate_limit?.primary_window?.used_percent;
-  const secondaryUsedPercent = response.rate_limit?.secondary_window?.used_percent;
+  const primaryWindow = response.rate_limit?.primary_window;
+  const secondaryWindow = response.rate_limit?.secondary_window;
+  const primaryUsedPercent = primaryWindow?.used_percent;
+  const secondaryUsedPercent = secondaryWindow?.used_percent;
+  const primaryResetAt = primaryWindow?.reset_at;
+  const secondaryResetAt = secondaryWindow?.reset_at;
 
-  if (!isValidPercent(primaryUsedPercent) || !isValidPercent(secondaryUsedPercent)) {
+  if (
+    !isValidPercent(primaryUsedPercent) ||
+    !isValidPercent(secondaryUsedPercent) ||
+    !isValidUnixTimestamp(primaryResetAt) ||
+    !isValidUnixTimestamp(secondaryResetAt)
+  ) {
     throw new Error("Parse error");
   }
 
-  return `${formatRemainingPercent(primaryUsedPercent)} 5hr / ${formatRemainingPercent(secondaryUsedPercent)} weekly`;
+  return {
+    display: `${formatRemainingPercent(primaryUsedPercent)} 5hr / ${formatRemainingPercent(secondaryUsedPercent)} weekly`,
+    fiveHourResetAt: primaryResetAt,
+    weeklyResetAt: secondaryResetAt,
+  };
 }
 
 function formatRemainingPercent(usedPercent: number) {
@@ -102,6 +125,10 @@ function formatRemainingPercent(usedPercent: number) {
 
 function isValidPercent(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isValidUnixTimestamp(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
 function clamp(value: number, min: number, max: number) {

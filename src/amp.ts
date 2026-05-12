@@ -4,6 +4,7 @@ import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
+const AMP_FULL_QUOTA = 10;
 const cliPath = [
   process.env.PATH,
   join(homedir(), ".local", "bin"),
@@ -18,6 +19,15 @@ const cliPath = [
   .join(delimiter);
 
 export async function getAmpFreeRemaining() {
+  return (await getAmpUsageDetails()).display;
+}
+
+export interface AmpUsage {
+  display: string;
+  remaining: number;
+}
+
+export async function getAmpUsageDetails(): Promise<AmpUsage> {
   let stdout: string;
 
   try {
@@ -39,5 +49,18 @@ function extractAmpFreeRemaining(output: string) {
     throw new Error("Parse error");
   }
 
-  return match[1];
+  const remaining = Number.parseFloat(match[1].replace(/[$,]/g, ""));
+
+  if (!Number.isFinite(remaining)) {
+    throw new Error("Parse error");
+  }
+
+  return {
+    display: match[1],
+    remaining: clamp(remaining, 0, AMP_FULL_QUOTA),
+  };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
