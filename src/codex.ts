@@ -113,7 +113,7 @@ function formatCodexUsage(data: unknown) {
   }
 
   return {
-    display: `${formatRemainingPercent(primaryUsedPercent)} 5hr / ${formatRemainingPercent(secondaryUsedPercent)} weekly`,
+    display: `${formatRemainingPercent(primaryUsedPercent)} 5hr · ${formatRemainingPercent(secondaryUsedPercent)} weekly`,
     fiveHourResetAt: primaryResetAt,
     weeklyResetAt: secondaryResetAt,
   };

@@ -15,21 +15,12 @@ export default async function Command() {
     title: "Fetching Usage",
   });
 
-  let amp: UsageResult = { value: null, error: null, status: "loading" };
-  let codex: UsageResult = { value: null, error: null, status: "loading" };
+  const [amp, codex] = await Promise.all([
+    checkUsage("Amp", getAmpUsageDetails),
+    checkUsage("Codex", getCodexUsageDetails),
+  ]);
 
-  const ampPromise = checkUsage("Amp", getAmpUsageDetails).then((result) => {
-    amp = result;
-    updateToast(toast, amp, codex);
-    return result;
-  });
-  const codexPromise = checkUsage("Codex", getCodexUsageDetails).then((result) => {
-    codex = result;
-    updateToast(toast, amp, codex);
-    return result;
-  });
-
-  await Promise.all([ampPromise, codexPromise]);
+  updateToast(toast, amp, codex);
 }
 
 async function checkUsage(provider: string, loadUsage: () => Promise<AmpUsage | CodexUsage>): Promise<UsageResult> {
