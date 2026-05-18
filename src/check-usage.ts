@@ -53,7 +53,7 @@ function updateToast(toast: Toast, amp: UsageResult, codex: UsageResult) {
   const isSuccess = amp.status === "success" && codex.status === "success";
   const usageSummary = `Amp: ${formatUsageResult(amp)} · Codex: ${formatUsageResult(codex)}`;
 
-  toast.title = hasResult ? `Usage ${usageSummary}` : "Fetching Usage";
+  toast.title = hasResult ? usageSummary : "Fetching Usage";
   toast.message = hasResult && isSuccess ? buildUsageDetailsLines(amp, codex).join("\n") : undefined;
   toast.style = isLoading ? Toast.Style.Animated : isSuccess ? Toast.Style.Success : Toast.Style.Failure;
   toast.primaryAction = undefined;
