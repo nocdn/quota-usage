@@ -1,6 +1,8 @@
-import { showToast, Toast } from "@raycast/api";
+import { environment, LaunchType, showToast, Toast, updateCommandMetadata } from "@raycast/api";
 import { AmpUsage, getAmpUsageDetails } from "./amp";
 import { CodexUsage, getCodexUsageDetails } from "./codex";
+
+const BACKGROUND_REFRESH_TIME_ZONE = "Europe/London";
 
 interface UsageResult {
   value: string | null;
@@ -10,6 +12,16 @@ interface UsageResult {
 }
 
 export default async function Command() {
+  if (environment.launchType === LaunchType.Background) {
+    if (isOvernight()) {
+      console.log("Skipping Codex usage background refresh overnight");
+      return;
+    }
+
+    await updateCodexSubtitle(await checkUsage("Codex", getCodexUsageDetails));
+    return;
+  }
+
   const toast = await showToast({
     style: Toast.Style.Animated,
     title: "Fetching Usage",
@@ -21,6 +33,7 @@ export default async function Command() {
   ]);
 
   updateToast(toast, amp, codex);
+  await updateCodexSubtitle(codex);
 }
 
 async function checkUsage(provider: string, loadUsage: () => Promise<AmpUsage | CodexUsage>): Promise<UsageResult> {
@@ -45,6 +58,28 @@ function formatUsageResult(result: UsageResult) {
   }
 
   return result.value ?? result.error ?? "Error";
+}
+
+async function updateCodexSubtitle(codex: UsageResult) {
+  await updateCommandMetadata({ subtitle: `Codex: ${formatUsageResult(codex)}` });
+}
+
+function isOvernight(date = new Date()) {
+  const hour = getLondonHour(date);
+
+  return hour >= 23 || hour < 7;
+}
+
+function getLondonHour(date: Date) {
+  const hour = new Intl.DateTimeFormat("en-GB", {
+    timeZone: BACKGROUND_REFRESH_TIME_ZONE,
+    hour: "numeric",
+    hourCycle: "h23",
+  })
+    .formatToParts(date)
+    .find((part) => part.type === "hour")?.value;
+
+  return Number(hour);
 }
 
 function updateToast(toast: Toast, amp: UsageResult, codex: UsageResult) {

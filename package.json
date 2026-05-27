@@ -19,7 +19,8 @@
       "title": "Check Usage",
       "subtitle": "See usage for Amp and Codex",
       "description": "The command shows a toast of how much usage is left.",
-      "mode": "no-view"
+      "mode": "no-view",
+      "interval": "2m"
     }
   ],
   "dependencies": {
