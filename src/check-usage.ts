@@ -1,5 +1,5 @@
-import { environment, LaunchType, showToast, Toast, updateCommandMetadata } from "@raycast/api";
-import { AmpUsage, getAmpUsageDetails } from "./amp";
+import { environment, getPreferenceValues, LaunchType, showToast, Toast, updateCommandMetadata } from "@raycast/api";
+import { AMP_FULL_QUOTA, AMP_REPLENISHMENT_RATE_PER_HOUR, AmpUsage, getAmpUsageDetails } from "./amp";
 import { CodexUsage, getCodexUsageDetails } from "./codex";
 
 const BACKGROUND_REFRESH_TIME_ZONE = "Europe/London";
@@ -9,6 +9,11 @@ interface UsageResult {
   error: string | null;
   status: "loading" | "success" | "error";
   details?: AmpUsage | CodexUsage;
+}
+
+interface UsageResults {
+  amp?: UsageResult;
+  codex?: UsageResult;
 }
 
 export default async function Command() {
@@ -22,18 +27,47 @@ export default async function Command() {
     return;
   }
 
+  const providers = getEnabledProviders();
+
+  if (!providers.amp && !providers.codex) {
+    await showToast({
+      style: Toast.Style.Failure,
+      title: "No providers to check",
+    });
+    return;
+  }
+
   const toast = await showToast({
     style: Toast.Style.Animated,
     title: "Fetching Usage",
   });
 
-  const [amp, codex] = await Promise.all([
-    checkUsage("Amp", getAmpUsageDetails),
-    checkUsage("Codex", getCodexUsageDetails),
-  ]);
+  const results: UsageResults = {};
+  const checks: Promise<void>[] = [];
 
-  updateToast(toast, amp, codex);
-  await updateCodexSubtitle(codex);
+  if (providers.amp) {
+    checks.push(
+      checkUsage("Amp", getAmpUsageDetails).then((result) => {
+        results.amp = result;
+      }),
+    );
+  }
+
+  if (providers.codex) {
+    checks.push(
+      checkUsage("Codex", getCodexUsageDetails).then((result) => {
+        results.codex = result;
+      }),
+    );
+  }
+
+  await Promise.all(checks);
+
+  updateToast(toast, results);
+
+  if (results.codex) {
+    await updateCodexSubtitle(results.codex);
+  }
 }
 
 async function checkUsage(provider: string, loadUsage: () => Promise<AmpUsage | CodexUsage>): Promise<UsageResult> {
@@ -64,6 +98,15 @@ async function updateCodexSubtitle(codex: UsageResult) {
   await updateCommandMetadata({ subtitle: `Codex: ${formatUsageResult(codex)}` });
 }
 
+function getEnabledProviders() {
+  const preferences = getPreferenceValues<Preferences.CheckUsage>();
+
+  return {
+    amp: preferences.showAmp !== false,
+    codex: preferences.showCodex !== false,
+  };
+}
+
 function isOvernight(date = new Date()) {
   const hour = getLondonHour(date);
 
@@ -82,34 +125,56 @@ function getLondonHour(date: Date) {
   return Number(hour);
 }
 
-function updateToast(toast: Toast, amp: UsageResult, codex: UsageResult) {
-  const isLoading = amp.status === "loading" || codex.status === "loading";
-  const hasResult = amp.status !== "loading" || codex.status !== "loading";
-  const isSuccess = amp.status === "success" && codex.status === "success";
-  const usageSummary = `Amp: ${formatUsageResult(amp)} · Codex: ${formatUsageResult(codex)}`;
+function updateToast(toast: Toast, results: UsageResults) {
+  const activeResults = [results.amp, results.codex].filter((result): result is UsageResult => Boolean(result));
+  const isLoading = activeResults.some((result) => result.status === "loading");
+  const isSuccess = activeResults.length > 0 && activeResults.every((result) => result.status === "success");
+  const usageSummary = buildUsageSummary(results);
 
-  toast.title = hasResult ? usageSummary : "Fetching Usage";
-  toast.message = hasResult && isSuccess ? buildUsageDetailsLines(amp, codex).join("\n") : undefined;
+  toast.title = usageSummary || "Fetching Usage";
+  toast.message = isSuccess ? buildUsageDetailsLines(results).join("\n") : undefined;
   toast.style = isLoading ? Toast.Style.Animated : isSuccess ? Toast.Style.Success : Toast.Style.Failure;
   toast.primaryAction = undefined;
   toast.secondaryAction = undefined;
 }
 
-function buildUsageDetailsLines(amp: UsageResult, codex: UsageResult) {
-  const codexDetails = codex.details as CodexUsage | undefined;
-  const ampDetails = amp.details as AmpUsage | undefined;
-
+function buildUsageSummary(results: UsageResults) {
   return [
-    `Codex 5hr reset: ${codexDetails ? formatRelativeDateTime(codexDetails.fiveHourResetAt * 1000) : formatDetailFallback(codex)}`,
-    `Codex weekly reset: ${codexDetails ? formatRelativeDateTime(codexDetails.weeklyResetAt * 1000) : formatDetailFallback(codex)}`,
-    `Amp replenished at: ${ampDetails ? formatAmpReplenishedAt(ampDetails.remaining) : formatDetailFallback(amp)}`,
-  ];
+    results.amp ? `Amp: ${formatUsageResult(results.amp)}` : null,
+    results.codex ? `Codex: ${formatUsageResult(results.codex)}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function buildUsageDetailsLines(results: UsageResults) {
+  const hasMultipleProviders = Boolean(results.amp && results.codex);
+  const lines: string[] = [];
+
+  if (results.codex) {
+    const codexDetails = results.codex.details as CodexUsage | undefined;
+    const codexPrefix = hasMultipleProviders ? "Codex " : "";
+
+    lines.push(
+      `${codexPrefix}5hr reset: ${codexDetails ? formatRelativeDateTime(codexDetails.fiveHourResetAt * 1000) : formatDetailFallback(results.codex)}`,
+      `${hasMultipleProviders ? "Codex weekly reset" : "Weekly reset"}: ${codexDetails ? formatRelativeDateTime(codexDetails.weeklyResetAt * 1000) : formatDetailFallback(results.codex)}`,
+    );
+  }
+
+  if (results.amp) {
+    const ampDetails = results.amp.details as AmpUsage | undefined;
+    const ampPrefix = hasMultipleProviders ? "Amp " : "";
+
+    lines.push(
+      `${ampPrefix}replenished at: ${ampDetails ? formatAmpReplenishedAt(ampDetails.remaining) : formatDetailFallback(results.amp)}`,
+    );
+  }
+
+  return lines;
 }
 
 function formatAmpReplenishedAt(remaining: number) {
-  const replenishmentRatePerHour = 0.42;
-  const fullQuota = 10;
-  const hoursUntilFull = Math.max(0, (fullQuota - remaining) / replenishmentRatePerHour);
+  const hoursUntilFull = Math.max(0, (AMP_FULL_QUOTA - remaining) / AMP_REPLENISHMENT_RATE_PER_HOUR);
 
   if (hoursUntilFull === 0) {
     return "Now";

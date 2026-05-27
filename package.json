@@ -20,7 +20,27 @@
       "subtitle": "See usage for Amp and Codex",
       "description": "The command shows a toast of how much usage is left.",
       "mode": "no-view",
-      "interval": "2m"
+      "interval": "2m",
+      "preferences": [
+        {
+          "name": "showCodex",
+          "title": "Providers",
+          "description": "Show Codex usage in the toast when manually running the command.",
+          "type": "checkbox",
+          "required": false,
+          "default": true,
+          "label": "Codex"
+        },
+        {
+          "name": "showAmp",
+          "title": "",
+          "description": "Show Amp usage in the toast when manually running the command.",
+          "type": "checkbox",
+          "required": false,
+          "default": true,
+          "label": "Amp"
+        }
+      ]
     }
   ],
   "dependencies": {

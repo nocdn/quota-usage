@@ -4,7 +4,8 @@ import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
-const AMP_FULL_QUOTA = 10;
+export const AMP_FULL_QUOTA = 5;
+export const AMP_REPLENISHMENT_RATE_PER_HOUR = 0.21;
 const cliPath = [
   process.env.PATH,
   join(homedir(), ".local", "bin"),
