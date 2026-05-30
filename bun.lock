@@ -5,16 +5,16 @@
     "": {
       "name": "quota-usage",
       "dependencies": {
-        "@raycast/api": "^1.104.16",
-        "@raycast/utils": "^1.17.0",
+        "@raycast/api": "^1.104.19",
+        "@raycast/utils": "^1.19.1",
       },
       "devDependencies": {
-        "@raycast/eslint-config": "^2.0.4",
+        "@raycast/eslint-config": "^2.1.1",
         "@types/node": "22.19.17",
         "@types/react": "19.0.10",
-        "eslint": "^9.22.0",
-        "prettier": "^3.5.3",
-        "typescript": "^5.8.2",
+        "eslint": "^9.39.4",
+        "prettier": "^3.8.3",
+        "typescript": "^5.9.3",
       },
     },
   },
@@ -139,7 +139,7 @@
 
     "@oclif/plugin-not-found": ["@oclif/plugin-not-found@3.2.85", "", { "dependencies": { "@inquirer/prompts": "^7.10.1", "@oclif/core": "^4.11.2", "ansis": "^3.17.0", "fast-levenshtein": "^3.0.0" } }, "sha512-Si18rRKWknlvQ5anmFbQz9oKBae5/l/Npreuf05xdoNWfOV1J97Z7cpzqBlHbldmxCIiDRgmDKuCBBi4XN6ACA=="],
 
-    "@raycast/api": ["@raycast/api@1.104.16", "", { "dependencies": { "@oclif/core": "^4.8.4", "@oclif/plugin-autocomplete": "^3.2.40", "@oclif/plugin-help": "^6.2.37", "@oclif/plugin-not-found": "^3.2.74", "@types/node": "22.19.17", "@types/react": "19.0.10", "esbuild": "^0.27.3", "react": "19.0.0" }, "peerDependencies": { "react-devtools": "6.1.1" }, "optionalPeers": ["react-devtools"], "bin": { "ray": "bin/run.js" } }, "sha512-PFUDslQgRGDhoTVJUDvJylezew6medQ2oZBfOk9HMdB7RfyhyQxZSnqihrRPCMin5FCg30W+M6oTOCwdwbRHRA=="],
+    "@raycast/api": ["@raycast/api@1.104.19", "", { "dependencies": { "@oclif/core": "^4.8.4", "@oclif/plugin-autocomplete": "^3.2.40", "@oclif/plugin-help": "^6.2.37", "@oclif/plugin-not-found": "^3.2.74", "@types/node": "22.19.17", "@types/react": "19.0.10", "esbuild": "^0.27.3", "react": "19.0.0" }, "peerDependencies": { "react-devtools": "6.1.1" }, "optionalPeers": ["react-devtools"], "bin": { "ray": "bin/run.js" } }, "sha512-SAVg56BAzxZGy/OPQ0jekUG3pJaoX5pCqleALvFo9JRE7P2tvKoglWnYRcIJArRhLlvV8FtFNMDafd+NNwXXCw=="],
 
     "@raycast/eslint-config": ["@raycast/eslint-config@2.1.1", "", { "dependencies": { "@eslint/js": "^9.36.0", "@raycast/eslint-plugin": "^2.1.1", "eslint-config-prettier": "^10.1.8", "globals": "^16.4.0", "typescript-eslint": "^8.45.0" }, "peerDependencies": { "eslint": ">=8.23.0", "prettier": ">=2", "typescript": ">=4" } }, "sha512-W0kxF+FJ+BYQn0EKIV739j2ZrHEtjo/LclsoZgUWg3t364Dq75XKcjqYFYx+59/DBaamY0amdajlfuDAf6veAg=="],
 

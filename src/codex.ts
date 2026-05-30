@@ -120,6 +120,12 @@ function formatCodexUsage(data: unknown) {
 }
 
 function formatRemainingPercent(usedPercent: number) {
+  // The API always reports at least 1% used even on untouched windows.
+  // Treat 1% used as 100% remaining to work around that bug.
+  if (usedPercent === 1) {
+    return "100%";
+  }
+
   return `${Math.round(clamp(100 - usedPercent, 0, 100))}%`;
 }
 
